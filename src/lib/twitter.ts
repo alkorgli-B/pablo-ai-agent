@@ -8,7 +8,18 @@ const client = new TwitterApi({
 });
 
 export const twitterClient = {
-  // 1. Post a new tweet
+  // 1. Get Me (Required for runner.ts:140)
+  async getMe() {
+    try {
+      const { data: me } = await client.v2.me();
+      return me;
+    } catch (error: any) {
+      console.error('❌ Twitter getMe Error:', error.message);
+      return null;
+    }
+  },
+
+  // 2. Post a new tweet
   async postTweet(text: string) {
     try {
       console.log('🚀 Attempting to post tweet...');
@@ -16,12 +27,16 @@ export const twitterClient = {
       console.log('✅ Tweet posted successfully:', createdTweet.id);
       return createdTweet;
     } catch (error: any) {
-      console.error('❌ Twitter Post Error:', error.data || error.message);
+      console.error('❌ Twitter Post Error Detail:', {
+        code: error.code,
+        data: error.data,
+        message: error.message
+      });
       throw error;
     }
   },
 
-  // 2. Get mentions
+  // 3. Get mentions
   async getMentions(sinceId?: string) {
     try {
       const mentions = await client.v2.userMentions(process.env.TWITTER_USER_ID || '', {
@@ -35,7 +50,7 @@ export const twitterClient = {
     }
   },
 
-  // 3. Reply to a tweet
+  // 4. Reply to a tweet
   async replyToTweet(tweetId: string, text: string) {
     try {
       const { data: reply } = await client.v2.reply(text, tweetId);
@@ -46,7 +61,7 @@ export const twitterClient = {
     }
   },
 
-  // 4. Like a tweet
+  // 5. Like a tweet
   async likeTweet(tweetId: string) {
     try {
       await client.v2.like(process.env.TWITTER_USER_ID || '', tweetId);
