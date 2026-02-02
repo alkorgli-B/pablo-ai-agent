@@ -5,22 +5,26 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  // Check authorization from header OR query parameter
-  const authHeader = request.headers.get('authorization');
-  const secretParam = request.nextUrl.searchParams.get('secret');
-  
-  const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
-  const expectedSecret = process.env.CRON_SECRET;
-  
-  // Accept either header or query parameter
-  if (authHeader !== expectedAuth && secretParam !== expectedSecret) {
-    return NextResponse.json({ 
-      error: 'Unauthorized',
-      hint: 'Use either Authorization header or ?secret=your_secret query parameter'
-    }, { status: 401 });
-  }
-
   try {
+    // Check authorization from header OR query parameter
+    const authHeader = request.headers.get('authorization');
+    const secretParam = request.nextUrl.searchParams.get('secret');
+    
+    const expectedSecret = process.env.CRON_SECRET;
+    
+    // Validate secret from either source
+    const isAuthorizedByHeader = authHeader === `Bearer ${expectedSecret}`;
+    const isAuthorizedByParam = secretParam === expectedSecret;
+    
+    if (!isAuthorizedByHeader && !isAuthorizedByParam) {
+      return NextResponse.json({ 
+        error: 'Unauthorized',
+        hint: 'Provide valid secret via Authorization header or ?secret= parameter',
+        receivedParam: secretParam ? 'yes' : 'no',
+        receivedHeader: authHeader ? 'yes' : 'no'
+      }, { status: 401 });
+    }
+
     console.log('🔄 Running agent cycle via cron...');
     await runAgentCycle();
     
