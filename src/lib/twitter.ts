@@ -8,7 +8,7 @@ const client = new TwitterApi({
 });
 
 export const twitterClient = {
-  // 1. Get Me (Required for runner.ts:140)
+  // 1. Get Me (Fixed and used for Mentions)
   async getMe() {
     try {
       const { data: me } = await client.v2.me();
@@ -27,19 +27,18 @@ export const twitterClient = {
       console.log('✅ Tweet posted successfully:', createdTweet.id);
       return createdTweet;
     } catch (error: any) {
-      console.error('❌ Twitter Post Error Detail:', {
-        code: error.code,
-        data: error.data,
-        message: error.message
-      });
+      console.error('❌ Twitter Post Error:', error.data || error.message);
       throw error;
     }
   },
 
-  // 3. Get mentions
+  // 3. Get mentions (Fixed method name based on Netlify logs)
   async getMentions(sinceId?: string) {
     try {
-      const mentions = await client.v2.userMentions(process.env.TWITTER_USER_ID || '', {
+      const me = await this.getMe();
+      if (!me) return [];
+
+      const mentions = await client.v2.userMentionTimeline(me.id, {
         since_id: sinceId,
         "tweet.fields": ['author_id', 'text'],
       });
@@ -64,7 +63,10 @@ export const twitterClient = {
   // 5. Like a tweet
   async likeTweet(tweetId: string) {
     try {
-      await client.v2.like(process.env.TWITTER_USER_ID || '', tweetId);
+      const me = await this.getMe();
+      if (me) {
+        await client.v2.like(me.id, tweetId);
+      }
     } catch (error: any) {
       console.error('❌ Twitter Like Error:', error.message);
     }
