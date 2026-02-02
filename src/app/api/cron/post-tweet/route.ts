@@ -6,23 +6,24 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  // 1. جلب السر من الرابط (URL)
-  const { searchParams } = new URL(request.url);
-  const urlSecret = searchParams.get('secret');
-  
-  // 2. جلب السر من الـ Header (للدعم التلقائي لاحقاً)
+  // Check authorization from header OR query parameter
   const authHeader = request.headers.get('authorization');
-  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-
-  // 3. التحقق: هل يطابق أحدهما القيمة 123456؟
-  if (urlSecret !== process.env.CRON_SECRET && bearerToken !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const secretParam = request.nextUrl.searchParams.get('secret');
+  
+  const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+  const expectedSecret = process.env.CRON_SECRET;
+  
+  // Accept either header or query parameter
+  if (authHeader !== expectedAuth && secretParam !== expectedSecret) {
+    return NextResponse.json({ 
+      error: 'Unauthorized',
+      hint: 'Use either Authorization header or ?secret=your_secret query parameter'
+    }, { status: 401 });
   }
 
   try {
-    console.log('📝 Generating and posting manual tweet...');
+    console.log('📝 Posting scheduled tweet...');
     
-    // توليد التغريدة عبر الذكاء الاصطناعي
     const tweet = await aiHelper.generateOriginalTweet();
     const validation = await aiHelper.validateTweet(tweet);
 
@@ -30,7 +31,6 @@ export async function GET(request: NextRequest) {
       throw new Error('Invalid tweet: ' + validation.issues.join(', '));
     }
 
-    // النشر الفعلي على تويتر
     const posted = await twitterClient.postTweet(tweet);
 
     return NextResponse.json({
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       tweet: tweet,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Post tweet error:', error);
     return NextResponse.json({
       success: false,
