@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+// تم التعديل ليقرأ من النظام مباشرة في Netlify أو من الملف المحلي إذا وجد
+dotenv.config(); 
 
 import twitterClient from '@/lib/twitter';
 import aiHelper from '@/lib/ai';
@@ -134,13 +135,20 @@ async function startPablo() {
   console.log('🚀 Starting Pablo...\n');
 
   try {
+    // التأكد من جلب بيانات الحساب للتحقق من الاتصال
+    console.log('🔍 Fetching user info...');
     const me = await twitterClient.getMe();
     if (me) {
-      console.log(`✅ Connected as: @${me.username}\n`);
+      console.log(`✅ Connected successfully as: @${me.username}\n`);
     }
-  } catch (error) {
-    console.error('❌ Failed to start:', error);
-    process.exit(1);
+  } catch (error: any) {
+    console.error('❌ Failed to start Pablo:');
+    if (error.status === 401) {
+      console.error('👉 Error 401: Unauthorized. Please check your Keys and Tokens in Netlify settings.');
+    } else {
+      console.error(error.message || error);
+    }
+    // لا نخرج من العملية في Netlify لنسمح بإعادة المحاولة
   }
 
   await runAgentCycle();
