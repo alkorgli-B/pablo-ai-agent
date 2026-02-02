@@ -5,17 +5,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  // جلب السر من الرابط (URL)
-  const { searchParams } = new URL(request.url);
-  const urlSecret = searchParams.get('secret');
-  
-  // جلب السر من الـ Header
+  // Check authorization from header OR query parameter
   const authHeader = request.headers.get('authorization');
-  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-
-  // التحقق من أن أحدهما يطابق CRON_SECRET الموجود في Netlify
-  if (urlSecret !== process.env.CRON_SECRET && bearerToken !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const secretParam = request.nextUrl.searchParams.get('secret');
+  
+  const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+  const expectedSecret = process.env.CRON_SECRET;
+  
+  // Accept either header or query parameter
+  if (authHeader !== expectedAuth && secretParam !== expectedSecret) {
+    return NextResponse.json({ 
+      error: 'Unauthorized',
+      hint: 'Use either Authorization header or ?secret=your_secret query parameter'
+    }, { status: 401 });
   }
 
   try {
