@@ -1,6 +1,5 @@
 import { TwitterApi } from 'twitter-api-v2';
 
-// Initialize the client with OAuth 1.0a
 const client = new TwitterApi({
   appKey: process.env.TWITTER_API_KEY || '',
   appSecret: process.env.TWITTER_API_SECRET || '',
@@ -9,7 +8,7 @@ const client = new TwitterApi({
 });
 
 export const twitterClient = {
-  // Function to post a tweet
+  // 1. Post a new tweet
   async postTweet(text: string) {
     try {
       console.log('🚀 Attempting to post tweet...');
@@ -17,20 +16,15 @@ export const twitterClient = {
       console.log('✅ Tweet posted successfully:', createdTweet.id);
       return createdTweet;
     } catch (error: any) {
-      console.error('❌ Twitter Post Error Detail:', {
-        code: error.code,
-        data: error.data,
-        message: error.message
-      });
+      console.error('❌ Twitter Post Error:', error.data || error.message);
       throw error;
     }
   },
 
-  // Function to get mentions (Fixed: Adding it back to avoid build failure)
+  // 2. Get mentions
   async getMentions(sinceId?: string) {
     try {
-      console.log('🔍 Checking mentions...');
-      const mentions = await client.v2.userMentions(process.env.TWITTER_USER_ID || '12345', {
+      const mentions = await client.v2.userMentions(process.env.TWITTER_USER_ID || '', {
         since_id: sinceId,
         "tweet.fields": ['author_id', 'text'],
       });
@@ -38,6 +32,26 @@ export const twitterClient = {
     } catch (error: any) {
       console.error('❌ Twitter Mentions Error:', error.message);
       return [];
+    }
+  },
+
+  // 3. Reply to a tweet
+  async replyToTweet(tweetId: string, text: string) {
+    try {
+      const { data: reply } = await client.v2.reply(text, tweetId);
+      return reply;
+    } catch (error: any) {
+      console.error('❌ Twitter Reply Error:', error.message);
+      throw error;
+    }
+  },
+
+  // 4. Like a tweet
+  async likeTweet(tweetId: string) {
+    try {
+      await client.v2.like(process.env.TWITTER_USER_ID || '', tweetId);
+    } catch (error: any) {
+      console.error('❌ Twitter Like Error:', error.message);
     }
   }
 };
