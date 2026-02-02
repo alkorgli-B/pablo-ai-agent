@@ -1,14 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { pabloPersonality } from '@/agent/personality';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize Gemini with your API Key
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 function buildSystemPrompt(): string {
   return `You are Pablo (@${pabloPersonality.username}), an autonomous AI agent on X (Twitter).
@@ -32,42 +26,19 @@ Guidelines:
 Remember: You are Pablo, be yourself!`;
 }
 
-export async function generateWithClaude(prompt: string): Promise<string> {
+export async function generateWithGemini(prompt: string): Promise<string> {
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      temperature: 0.8,
-      system: buildSystemPrompt(),
-      messages: [{ role: 'user', content: prompt }],
+    // Using gemini-1.5-flash which is fast and free
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: buildSystemPrompt(),
     });
 
-    const response = message.content[0];
-    if (response.type === 'text') {
-      return response.text;
-    }
-    throw new Error('Unexpected response from Claude');
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
   } catch (error) {
-    console.error('❌ Claude error:', error);
-    throw error;
-  }
-}
-
-export async function generateWithGPT4(prompt: string): Promise<string> {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
-      max_tokens: 1024,
-      temperature: 0.8,
-      messages: [
-        { role: 'system', content: buildSystemPrompt() },
-        { role: 'user', content: prompt },
-      ],
-    });
-
-    return completion.choices[0]?.message?.content || '';
-  } catch (error) {
-    console.error('❌ GPT-4 error:', error);
+    console.error('❌ Gemini error:', error);
     throw error;
   }
 }
@@ -85,25 +56,22 @@ export async function generateOriginalTweet(): Promise<string> {
   const prompt = prompts[Math.floor(Math.random() * prompts.length)];
 
   try {
-    const tweet = await generateWithClaude(prompt);
+    const tweet = await generateWithGemini(prompt);
     return tweet.length > 280 ? tweet.substring(0, 277) + '...' : tweet;
-  } catch {
-    return await generateWithGPT4(prompt);
+  } catch (error) {
+    console.error('❌ Failed to generate tweet:', error);
+    return "The future of AI is not just about code, it's about connection. 🤖✨";
   }
 }
 
 export async function generateReply(tweetText: string, author?: string): Promise<string> {
-  const prompt = `Reply to this tweet${author ? ` from ${author}` : ''}:
-
-"${tweetText}"
-
-Write a helpful, friendly reply under 280 characters.`;
+  const prompt = `Reply to this tweet${author ? ` from ${author}` : ''}: "${tweetText}". Write a helpful, friendly reply under 280 characters.`;
 
   try {
-    const reply = await generateWithClaude(prompt);
+    const reply = await generateWithGemini(prompt);
     return reply.length > 280 ? reply.substring(0, 277) + '...' : reply;
   } catch {
-    return await generateWithGPT4(prompt);
+    return "That's a very interesting point! Thanks for sharing. 🤖";
   }
 }
 
@@ -125,12 +93,6 @@ export async function validateTweet(text: string): Promise<{
     score -= 100;
   }
 
-  const emojiCount = (text.match(/[\p{Emoji}]/gu) || []).length;
-  if (emojiCount > 5) {
-    issues.push('Too many emojis');
-    score -= 20;
-  }
-
   return {
     isValid: score >= 50,
     issues,
@@ -142,6 +104,5 @@ export default {
   generateOriginalTweet,
   generateReply,
   validateTweet,
-  generateWithClaude,
-  generateWithGPT4,
+  generateWithGemini,
 };
