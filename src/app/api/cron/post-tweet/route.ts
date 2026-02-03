@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import twitterClient from '@/lib/twitter';
+import aiHelper from '@/lib/ai';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,27 +11,26 @@ export async function GET(request: NextRequest) {
     const secretParam = request.nextUrl.searchParams.get('secret');
     const expectedSecret = process.env.CRON_SECRET;
     
-    if (secretParam !== expectedSecret) {
+    if (!expectedSecret || secretParam !== expectedSecret) {
       return NextResponse.json({ 
         error: 'Unauthorized'
       }, { status: 401 });
     }
 
-    // Lazy load heavy modules
-    const { default: twitterClient } = await import('@/lib/twitter');
-    const { default: aiHelper } = await import('@/lib/ai');
-
     console.log('📝 Generating tweet...');
     
     const tweet = await aiHelper.generateOriginalTweet();
-    const validation = await aiHelper.validateTweet(tweet);
-
-    if (!validation.isValid) {
-      return NextResponse.json({
-        success: false,
-        error: 'Tweet validation failed',
-        issues: validation.issues
-      }, { status: 400 });
+    
+    // Check validation if method exists
+    if (typeof aiHelper.validateTweet === 'function') {
+      const validation = await aiHelper.validateTweet(tweet);
+      if (!validation.isValid) {
+        return NextResponse.json({
+          success: false,
+          error: 'Tweet validation failed',
+          issues: validation.issues
+        }, { status: 400 });
+      }
     }
 
     console.log('📤 Posting to Twitter...');
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      tweetId: posted.id,
+      tweetId: posted?.id || 'unknown',
       tweet: tweet,
       timestamp: new Date().toISOString(),
     });
@@ -47,8 +48,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       success: false,
-      error: error.message || 'Unknown error',
-      code: error.code || 'UNKNOWN',
+      error: error.message || 'Internal Server Error',
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }
