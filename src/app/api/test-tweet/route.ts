@@ -6,10 +6,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Test tweet
-    const testTweet = "🤖 Pablo AI Agent - Test tweet at " + new Date().toLocaleString();
+    console.log('Testing Twitter API...');
     
-    // Initialize Twitter client
+    // Simple test tweet
+    const testMessage = `🤖 Test from Pablo - ${new Date().toLocaleTimeString()}`;
+    
+    // Initialize Twitter
     const client = new TwitterApi({
       appKey: process.env.TWITTER_API_KEY!,
       appSecret: process.env.TWITTER_API_SECRET!,
@@ -17,26 +19,23 @@ export async function GET(request: NextRequest) {
       accessSecret: process.env.TWITTER_ACCESS_SECRET!,
     });
 
-    const rwClient = client.readWrite;
-    
-    // Try to post
-    const result = await rwClient.v2.tweet(testTweet);
+    // Try to tweet
+    const result = await client.readWrite.v2.tweet(testMessage);
     
     return NextResponse.json({
       success: true,
-      message: "Tweet posted successfully!",
+      message: 'Twitter API works!',
       tweetId: result.data.id,
-      text: testTweet,
-      url: `https://twitter.com/pablo26agent/status/${result.data.id}`
+      text: testMessage,
     });
     
   } catch (error: any) {
+    console.error('Twitter error:', error);
     return NextResponse.json({
       success: false,
-      error: error.message,
+      error: error.message || 'Unknown error',
       code: error.code,
-      data: error.data,
-      fullError: JSON.stringify(error, null, 2)
+      details: JSON.stringify(error, null, 2)
     }, { status: 500 });
   }
 }
