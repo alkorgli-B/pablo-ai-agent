@@ -1,32 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import twitterClient from '@/lib/twitter';
-import aiHelper from '@/lib/ai';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authorization from header OR query parameter
-    const authHeader = request.headers.get('authorization');
+    // Check auth
     const secretParam = request.nextUrl.searchParams.get('secret');
-    
     const expectedSecret = process.env.CRON_SECRET;
     
-    // Validate secret from either source
-    const isAuthorizedByHeader = authHeader === `Bearer ${expectedSecret}`;
-    const isAuthorizedByParam = secretParam === expectedSecret;
-    
-    if (!isAuthorizedByHeader && !isAuthorizedByParam) {
+    if (secretParam !== expectedSecret) {
       return NextResponse.json({ 
-        error: 'Unauthorized',
-        hint: 'Provide valid secret via Authorization header or ?secret= parameter',
-        receivedParam: secretParam ? 'yes' : 'no',
-        receivedHeader: authHeader ? 'yes' : 'no'
+        error: 'Unauthorized'
       }, { status: 401 });
     }
 
-    console.log('📝 Posting scheduled tweet...');
+    // Lazy load heavy modules
+    const { default: twitterClient } = await import('@/lib/twitter');
+    const { default: aiHelper } = await import('@/lib/ai');
+
+    console.log('📝 Generating tweet...');
     
     const tweet = await aiHelper.generateOriginalTweet();
     const validation = await aiHelper.validateTweet(tweet);
@@ -34,10 +27,12 @@ export async function GET(request: NextRequest) {
     if (!validation.isValid) {
       return NextResponse.json({
         success: false,
-        error: 'Invalid tweet: ' + validation.issues.join(', ')
+        error: 'Tweet validation failed',
+        issues: validation.issues
       }, { status: 400 });
     }
 
+    console.log('📤 Posting to Twitter...');
     const posted = await twitterClient.postTweet(tweet);
 
     return NextResponse.json({
@@ -46,11 +41,15 @@ export async function GET(request: NextRequest) {
       tweet: tweet,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+    
+  } catch (error: any) {
     console.error('❌ Post tweet error:', error);
+    
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error.message || 'Unknown error',
+      code: error.code || 'UNKNOWN',
+      timestamp: new Date().toISOString()
     }, { status: 500 });
   }
 }
