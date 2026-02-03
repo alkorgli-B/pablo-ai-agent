@@ -4,35 +4,39 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Check if environment variables exist
-    const hasTwitterKeys = !!(
-      process.env.TWITTER_API_KEY &&
-      process.env.TWITTER_API_SECRET &&
-      process.env.TWITTER_ACCESS_TOKEN &&
-      process.env.TWITTER_ACCESS_SECRET
-    );
+    // Environment variables safety check
+    const configStatus = {
+      twitter: {
+        apiKey: !!process.env.TWITTER_API_KEY,
+        apiSecret: !!process.env.TWITTER_API_SECRET,
+        accessToken: !!process.env.TWITTER_ACCESS_TOKEN,
+        accessSecret: !!process.env.TWITTER_ACCESS_SECRET,
+      },
+      ai: {
+        anthropic: !!process.env.ANTHROPIC_API_KEY,
+        openai: !!process.env.OPENAI_API_KEY,
+      },
+      general: {
+        username: process.env.PABLO_USERNAME || 'Not configured',
+        cronSecret: !!process.env.CRON_SECRET,
+      }
+    };
 
-    const hasAIKeys = !!(
-      process.env.ANTHROPIC_API_KEY &&
-      process.env.OPENAI_API_KEY
-    );
+    const isFullyConfigured = 
+      Object.values(configStatus.twitter).every(Boolean) && 
+      (configStatus.ai.anthropic || configStatus.ai.openai);
 
     return NextResponse.json({
       success: true,
-      message: 'Environment check complete',
-      config: {
-        twitterConfigured: hasTwitterKeys,
-        aiConfigured: hasAIKeys,
-        username: process.env.PABLO_USERNAME || 'Not set',
-        cronSecret: process.env.CRON_SECRET ? 'Set' : 'Not set',
-      },
+      status: isFullyConfigured ? 'Ready' : 'Incomplete Configuration',
+      details: configStatus,
       timestamp: new Date().toISOString()
     });
     
   } catch (error: any) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: error.message || 'Diagnostic failed'
     }, { status: 500 });
   }
 }
