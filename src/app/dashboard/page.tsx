@@ -1,16 +1,16 @@
+"use client";
+
+import React from "react";
 import Link from "next/link";
 import { 
   Activity, 
   TrendingUp, 
   MessageCircle, 
-  Heart, 
   Users, 
-  Zap,
-  Twitter,
-  Brain,
-  Clock,
-  BarChart3,
-  Sparkles
+  Twitter, 
+  Clock, 
+  Sparkles,
+  Bot
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -51,7 +51,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Status Banner */}
           <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 backdrop-blur-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
@@ -69,27 +68,25 @@ export default function Dashboard() {
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Followers */}
-          <div className="group p-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/40 transition-all hover:scale-105 backdrop-blur-sm">
+          <div className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/40 transition-all backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Users className="w-6 h-6 text-blue-400" />
-              </div>
+              <Users className="w-6 h-6 text-blue-400" />
               <TrendingUp className="w-5 h-5 text-green-400" />
             </div>
-            <div className="text-sm text-gray-400 mb-1">Followers</div>
-            <div className="text-4xl font-bold mb-1">3</div>
-            <div className="text-xs text-green-400">+1 this week</div>
+            <div className="text-sm text-gray-400">Followers</div>
+            <div className="text-4xl font-bold">3</div>
           </div>
 
-          {/* Total Tweets */}
-          <div className="group p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 hover:border-purple-500/40 transition-all hover:scale-105 backdrop-blur-sm">
+          <div className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/40 transition-all backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <MessageCircle className="w-6 h-6 text-purple-400" />
-              </div>
+              <MessageCircle className="w-6 h-6 text-purple-400" />
               <Activity className="w-5 h-5 text-purple-400" />
             </div>
-            <div className="text-sm text-gray-400 mb-1">Total Tweets</div>
-            <div className="text-4xl font-bold mb-1">2</div>
-            <div className="text-xs text-purple-400">Generated​​​​​​​​​​​​​​​​
+            <div className="text-sm text-gray-400">Total Tweets</div>
+            <div className="text-4xl font-bold">2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
