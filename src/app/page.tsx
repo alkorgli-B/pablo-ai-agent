@@ -1,3 +1,6 @@
+"use client";
+
+import React from "react";
 import Link from "next/link";
 import { Twitter, Bot, Sparkles, Zap, Brain, TrendingUp } from "lucide-react";
 
@@ -34,7 +37,6 @@ export default function Home() {
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-5xl mx-auto text-center space-y-8">
-            {/* Main Title */}
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm">
                 <Sparkles className="w-4 h-4 text-blue-400" />
@@ -54,7 +56,6 @@ export default function Home() {
               </p>
             </div>
 
-            {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a
                 href="https://twitter.com/pablo26agent"
@@ -104,131 +105,44 @@ export default function Home() {
             </h2>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Feature 1 */}
               <div className="group p-8 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:scale-105">
                 <div className="w-14 h-14 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Brain className="w-7 h-7 text-blue-400" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Advanced AI Intelligence</h3>
                 <p className="text-gray-400">
-                  Powered by Claude Sonnet 4.5 and GPT-4, Pablo understands context, sentiment, and nuance in conversations.
+                  Powered by Claude Sonnet 4.5 and GPT-4, Pablo understands context and nuance.
                 </p>
               </div>
 
-              {/* Feature 2 */}
               <div className="group p-8 rounded-2xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 hover:scale-105">
                 <div className="w-14 h-14 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Zap className="w-7 h-7 text-purple-400" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Fully Autonomous</h3>
                 <p className="text-gray-400">
-                  Operates independently 24/7, posting original content, engaging with followers, and learning from interactions.
+                  Operates independently 24/7, posting original content and engaging with followers.
                 </p>
               </div>
 
-              {/* Feature 3 */}
               <div className="group p-8 rounded-2xl bg-gradient-to-br from-pink-500/10 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300 hover:scale-105">
                 <div className="w-14 h-14 rounded-xl bg-pink-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <TrendingUp className="w-7 h-7 text-pink-400" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Continuous Learning</h3>
                 <p className="text-gray-400">
-                  Adapts and improves over time, learning from every interaction to provide better responses and content.
-                </p>
-              </div>
-
-              {/* Feature 4 */}
-              <div className="group p-8 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300 hover:scale-105">
-                <div className="w-14 h-14 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Twitter className="w-7 h-7 text-cyan-400" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3">Real-Time Engagement</h3>
-                <p className="text-gray-400">
-                  Monitors mentions, replies to followers, and engages in meaningful conversations on X in real-time.
-                </p>
-              </div>
-
-              {/* Feature 5 */}
-              <div className="group p-8 rounded-2xl bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 hover:border-green-500/40 transition-all duration-300 hover:scale-105">
-                <div className="w-14 h-14 rounded-xl bg-green-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-7 h-7 text-green-400" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3">Original Content</h3>
-                <p className="text-gray-400">
-                  Creates unique, thoughtful tweets about AI, technology, innovation, and more—never repeating content.
-                </p>
-              </div>
-
-              {/* Feature 6 */}
-              <div className="group p-8 rounded-2xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:scale-105">
-                <div className="w-14 h-14 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Bot className="w-7 h-7 text-orange-400" />
-                </div>
-                <h3 className="text-xl font-semibold mb-3">Personality-Driven</h3>
-                <p className="text-gray-400">
-                  Unique personality with interests in AI, tech, philosophy—making every interaction authentic and engaging.
+                  Adapts and improves over time, learning from every interaction.
                 </p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Tech Stack */}
-        <section className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h2 className="text-3xl font-bold">Built with Cutting-Edge Technology</h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-blue-500/30 transition-all">
-                <div className="text-4xl mb-2">🤖</div>
-                <div className="font-semibold text-blue-400">Claude 4.5</div>
-              </div>
-              <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-purple-500/30 transition-all">
-                <div className="text-4xl mb-2">🧠</div>
-                <div className="font-semibold text-purple-400">GPT-4</div>
-              </div>
-              <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-cyan-500/30 transition-all">
-                <div className="text-4xl mb-2">⚡</div>
-                <div className="font-semibold text-cyan-400">Next.js 14</div>
-              </div>
-              <div className="p-6 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-green-500/30 transition-all">
-                <div className="text-4xl mb-2">🐦</div>
-                <div className="font-semibold text-green-400">Twitter API</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 backdrop-blur-sm">
-            <h2 className="text-4xl font-bold mb-4">
-              Experience the Future of AI Agents
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Follow Pablo on X and witness autonomous AI in action
-            </p>
-            <a
-              href="https://twitter.com/pablo26agent"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 font-semibold transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-            >
-              <Twitter className="w-5 h-5" />
-              @pablo26agent
-            </a>
           </div>
         </section>
 
         {/* Footer */}
         <footer className="container mx-auto px-4 py-12 border-t border-white/10">
           <div className="text-center text-gray-400">
-            <p className="mb-2">
-              Built with ❤️ using AI • Powered by Claude & GPT-4
-            </p>
-            <p className="text-sm">
-              © 2026 Pablo AI Agent • Autonomous & Learning
-            </p>
+            <p className="mb-2">Built with ❤️ using AI • Powered by Claude & GPT-4</p>
+            <p className="text-sm">© 2026 Pablo AI Agent • Autonomous & Learning</p>
           </div>
         </footer>
       </div>
