@@ -102,28 +102,31 @@ module.exports = async function handler(req, res) {
   // If neither secret is configured, all requests are allowed
   var isAuthorized = false;
   var authHeader = req.headers['authorization'] || '';
-  var cronSecret = process.env.CRON_SECRET;
-  var botSecret = process.env.BOT_SECRET_KEY;
-  var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
+  var cronSecret = (process.env.CRON_SECRET || '').trim();
+  var botSecret = (process.env.BOT_SECRET_KEY || '').trim();
+  var authKey = (req.query.key || req.headers['x-api-key'] || (req.body && req.body.key) || '').trim();
 
   // Check CRON_SECRET (for Vercel Cron)
   if (cronSecret && authHeader === 'Bearer ' + cronSecret) {
     isAuthorized = true;
   }
 
-  // Check BOT_SECRET_KEY (for manual access)
-  if (!isAuthorized && botSecret && authKey === botSecret) {
+  // Check BOT_SECRET_KEY (for manual access) - trim both to avoid whitespace issues
+  if (!isAuthorized && botSecret && authKey && authKey === botSecret) {
     isAuthorized = true;
   }
 
-  // If CRON_SECRET is not set, allow requests without a key param
-  // (this lets Vercel Cron work without configuring CRON_SECRET)
+  // If no secrets configured at all, allow everything (initial setup)
+  if (!isAuthorized && !cronSecret && !botSecret) {
+    isAuthorized = true;
+  }
+
+  // If CRON_SECRET is not set, allow requests without a key param (for Vercel Cron)
   if (!isAuthorized && !cronSecret && !authKey) {
     isAuthorized = true;
   }
 
-  // If BOT_SECRET_KEY is not set, allow any request that has a key param
-  // (this lets manual testing work before BOT_SECRET_KEY is configured)
+  // If BOT_SECRET_KEY is not set, allow any request with a key param (for testing)
   if (!isAuthorized && !botSecret && authKey) {
     isAuthorized = true;
   }
@@ -136,6 +139,8 @@ module.exports = async function handler(req, res) {
         has_cron_secret_env: Boolean(cronSecret),
         has_bot_secret_env: Boolean(botSecret),
         key_provided: Boolean(authKey),
+        bot_secret_length: botSecret.length,
+        key_length: authKey.length,
       },
     });
   }
