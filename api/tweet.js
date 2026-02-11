@@ -53,7 +53,12 @@ async function generateTweet() {
     ],
   });
 
-  return message.content[0].text;
+  const textBlock = message.content.find(block => block.type === 'text');
+  if (!textBlock) {
+    throw new Error('No text content in Claude response');
+  }
+
+  return textBlock.text.slice(0, 280);
 }
 
 async function postTweet() {
@@ -69,13 +74,16 @@ async function postTweet() {
     return {
       success: false,
       error: error.message,
-      stack: error.stack,
     };
   }
 }
 
 // Vercel serverless function handler
 module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   // Get the key from query or header
   const authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
 
