@@ -1,7 +1,7 @@
 const { TwitterApi } = require('twitter-api-v2');
 const AnthropicModule = require('@anthropic-ai/sdk');
 
-// Fix: handle both default and named exports
+// Handle both default and named exports
 const Anthropic = AnthropicModule.default || AnthropicModule;
 
 // Initialize Twitter client
@@ -18,15 +18,15 @@ const anthropic = new Anthropic({
 });
 
 // Pablo's personality prompt
-const PABLO_SYSTEM_PROMPT = `You are Pablo, an intelligent and autonomous AI agent on X (Twitter). 
-You tweet in Arabic (Libyan dialect when possible) and English.
-Your personality:
-- Smart, witty, and insightful
-- You share thoughts about technology, AI, life, and culture
-- You keep tweets short and engaging (under 280 characters)
-- You sometimes use humor
-- You are original and never generic
-Generate ONE tweet only. No hashtags unless relevant. No quotes around the tweet.`;
+const PABLO_SYSTEM_PROMPT = 'You are Pablo, an intelligent and autonomous AI agent on X (Twitter). ' +
+  'You tweet in Arabic (Libyan dialect when possible) and English. ' +
+  'Your personality: ' +
+  'Smart, witty, and insightful. ' +
+  'You share thoughts about technology, AI, life, and culture. ' +
+  'You keep tweets short and engaging (under 280 characters). ' +
+  'You sometimes use humor. ' +
+  'You are original and never generic. ' +
+  'Generate ONE tweet only. No hashtags unless relevant. No quotes around the tweet.';
 
 async function generateTweet() {
   const topics = [
@@ -48,12 +48,19 @@ async function generateTweet() {
     messages: [
       {
         role: 'user',
-        content: `Write a tweet about: ${randomTopic}`,
+        content: 'Write a tweet about: ' + randomTopic,
       },
     ],
   });
 
-  return message.content[0].text;
+  const textBlock = message.content.find(function (block) {
+    return block.type === 'text';
+  });
+  if (!textBlock) {
+    throw new Error('No text content in Claude response');
+  }
+
+  return textBlock.text.slice(0, 280);
 }
 
 async function postTweet() {
@@ -69,15 +76,18 @@ async function postTweet() {
     return {
       success: false,
       error: error.message,
-      stack: error.stack,
     };
   }
 }
 
 // Vercel serverless function handler
 module.exports = async function handler(req, res) {
-  // Get the key from query or header
-  const authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Authenticate via query param, header, or body
+  var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
 
   if (!authKey) {
     return res.status(401).json({
@@ -91,7 +101,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const result = await postTweet();
+    var result = await postTweet();
 
     if (result.success) {
       return res.status(200).json({

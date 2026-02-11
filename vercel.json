@@ -4,12 +4,20 @@
     {
       "src": "api/tweet.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/test.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/tweet",
       "dest": "/api/tweet.js"
+    },
+    {
+      "src": "/api/test",
+      "dest": "/api/test.js"
     }
   ]
 }
