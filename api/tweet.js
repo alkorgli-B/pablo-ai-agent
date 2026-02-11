@@ -97,33 +97,46 @@ module.exports = async function handler(req, res) {
   }
 
   // --- Authentication ---
+  // Vercel Cron sends Authorization: Bearer <CRON_SECRET>
+  // Manual access uses ?key=<BOT_SECRET_KEY>
+  // If neither secret is configured, all requests are allowed
   var isAuthorized = false;
-
-  // Method 1: Vercel Cron with CRON_SECRET
   var authHeader = req.headers['authorization'] || '';
   var cronSecret = process.env.CRON_SECRET;
+  var botSecret = process.env.BOT_SECRET_KEY;
+  var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
+
+  // Check CRON_SECRET (for Vercel Cron)
   if (cronSecret && authHeader === 'Bearer ' + cronSecret) {
     isAuthorized = true;
   }
 
-  // Method 2: Manual trigger with BOT_SECRET_KEY
-  if (!isAuthorized) {
-    var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
-    if (authKey && authKey === process.env.BOT_SECRET_KEY) {
-      isAuthorized = true;
-    }
+  // Check BOT_SECRET_KEY (for manual access)
+  if (!isAuthorized && botSecret && authKey === botSecret) {
+    isAuthorized = true;
   }
 
-  // Method 3: If no secrets are configured at all, allow access
-  // (so the bot works during initial setup before secrets are added)
-  if (!isAuthorized && !cronSecret && !process.env.BOT_SECRET_KEY) {
+  // If CRON_SECRET is not set, allow requests without a key param
+  // (this lets Vercel Cron work without configuring CRON_SECRET)
+  if (!isAuthorized && !cronSecret && !authKey) {
+    isAuthorized = true;
+  }
+
+  // If BOT_SECRET_KEY is not set, allow any request that has a key param
+  // (this lets manual testing work before BOT_SECRET_KEY is configured)
+  if (!isAuthorized && !botSecret && authKey) {
     isAuthorized = true;
   }
 
   if (!isAuthorized) {
     return res.status(401).json({
       error: 'Unauthorized',
-      hint: 'Set CRON_SECRET env var for cron jobs, or use ?key=YOUR_BOT_SECRET_KEY for manual access',
+      hint: 'The key you provided does not match BOT_SECRET_KEY in Vercel env vars',
+      debug: {
+        has_cron_secret_env: Boolean(cronSecret),
+        has_bot_secret_env: Boolean(botSecret),
+        key_provided: Boolean(authKey),
+      },
     });
   }
 
