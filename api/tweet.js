@@ -83,12 +83,15 @@ async function postTweet() {
   });
 
   var tweetText = await generateTweet();
-  var tweet = await twitterClient.v2.tweet(tweetText);
-  return {
-    success: true,
-    tweet: tweetText,
-    id: tweet.data.id,
-  };
+
+  // Try v2 first, fall back to v1.1
+  try {
+    var tweet = await twitterClient.v2.tweet(tweetText);
+    return { success: true, tweet: tweetText, id: tweet.data.id };
+  } catch (v2Err) {
+    var tweet = await twitterClient.v1.tweet(tweetText);
+    return { success: true, tweet: tweetText, id: tweet.id_str };
+  }
 }
 
 // Vercel serverless function handler
@@ -169,17 +172,51 @@ module.exports = async function handler(req, res) {
         accessSecret: process.env.TWITTER_ACCESS_SECRET,
       });
       var testText = 'مرحبا، انا بابلو 🤖 بديت اليوم! صانعي @alkorgli فهّمني كل شي. Hello world, I am Pablo AI - I just started today!';
-      var testTweet = await testClient.v2.tweet(testText);
-      return res.status(200).json({
-        message: 'Pablo first tweet posted!',
-        mode: 'test',
-        tweet: testText,
-        tweet_id: testTweet.data.id,
-      });
+
+      // Try v2 first, fall back to v1.1
+      var testTweet;
+      try {
+        testTweet = await testClient.v2.tweet(testText);
+        return res.status(200).json({
+          message: 'Pablo first tweet posted!',
+          mode: 'test',
+          api: 'v2',
+          tweet: testText,
+          tweet_id: testTweet.data.id,
+        });
+      } catch (v2Error) {
+        // v2 failed, try v1.1
+        try {
+          testTweet = await testClient.v1.tweet(testText);
+          return res.status(200).json({
+            message: 'Pablo first tweet posted!',
+            mode: 'test',
+            api: 'v1.1',
+            tweet: testText,
+            tweet_id: testTweet.id_str,
+          });
+        } catch (v1Error) {
+          return res.status(500).json({
+            message: 'Failed to post test tweet (both v2 and v1.1 failed)',
+            v2_error: {
+              code: v2Error.code,
+              message: v2Error.message,
+              data: v2Error.data || null,
+            },
+            v1_error: {
+              code: v1Error.code,
+              message: v1Error.message,
+              data: v1Error.data || null,
+            },
+            hint: 'Go to developer.twitter.com > App Settings > ensure Read and Write permissions, and your account has a plan (even Free tier).',
+          });
+        }
+      }
     } catch (error) {
       return res.status(500).json({
         message: 'Failed to post test tweet',
         error: error.message,
+        data: error.data || null,
       });
     }
   }
