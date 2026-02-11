@@ -7,7 +7,6 @@ module.exports = async function handler(req, res) {
       has_twitter_key: !!process.env.TWITTER_API_KEY,
       has_anthropic_key: !!process.env.ANTHROPIC_API_KEY,
       has_bot_secret: !!process.env.BOT_SECRET_KEY,
-      bot_secret_value: process.env.BOT_SECRET_KEY,
     }
   });
 };
