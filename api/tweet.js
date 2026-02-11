@@ -149,16 +149,6 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // --- Check required environment variables ---
-  var missing = checkEnvVars();
-  if (missing.length > 0) {
-    return res.status(500).json({
-      error: 'Missing required environment variables',
-      missing: missing,
-      hint: 'Add these in Vercel Dashboard > Settings > Environment Variables',
-    });
-  }
-
   // --- Test mode: post a hardcoded tweet without Claude API ---
   if (req.query.test === '1') {
     var twitterMissing = [];
@@ -192,6 +182,16 @@ module.exports = async function handler(req, res) {
         error: error.message,
       });
     }
+  }
+
+  // --- Check required environment variables (for normal mode) ---
+  var missing = checkEnvVars();
+  if (missing.length > 0) {
+    return res.status(500).json({
+      error: 'Missing required environment variables',
+      missing: missing,
+      hint: 'Add these in Vercel Dashboard > Settings > Environment Variables',
+    });
   }
 
   // --- Generate and post tweet ---
