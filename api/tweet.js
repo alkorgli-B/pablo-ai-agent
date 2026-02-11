@@ -5,13 +5,14 @@ var AnthropicModule = require('@anthropic-ai/sdk');
 var Anthropic = AnthropicModule.default || AnthropicModule;
 
 // Required environment variables for tweeting
-var REQUIRED_ENV = [
+var TWITTER_ENV = [
   'TWITTER_API_KEY',
   'TWITTER_API_SECRET',
   'TWITTER_ACCESS_TOKEN',
   'TWITTER_ACCESS_SECRET',
-  'ANTHROPIC_API_KEY',
 ];
+
+var REQUIRED_ENV = TWITTER_ENV.concat(['ANTHROPIC_API_KEY']);
 
 function checkEnvVars() {
   var missing = [];
@@ -156,6 +157,41 @@ module.exports = async function handler(req, res) {
       missing: missing,
       hint: 'Add these in Vercel Dashboard > Settings > Environment Variables',
     });
+  }
+
+  // --- Test mode: post a hardcoded tweet without Claude API ---
+  if (req.query.test === '1') {
+    var twitterMissing = [];
+    for (var i = 0; i < TWITTER_ENV.length; i++) {
+      if (!process.env[TWITTER_ENV[i]]) twitterMissing.push(TWITTER_ENV[i]);
+    }
+    if (twitterMissing.length > 0) {
+      return res.status(500).json({
+        error: 'Missing Twitter env vars',
+        missing: twitterMissing,
+      });
+    }
+    try {
+      var testClient = new TwitterApi({
+        appKey: process.env.TWITTER_API_KEY,
+        appSecret: process.env.TWITTER_API_SECRET,
+        accessToken: process.env.TWITTER_ACCESS_TOKEN,
+        accessSecret: process.env.TWITTER_ACCESS_SECRET,
+      });
+      var testText = 'مرحبا، انا بابلو 🤖 بديت اليوم! صانعي @alkorgli فهّمني كل شي. Hello world, I am Pablo AI - I just started today!';
+      var testTweet = await testClient.v2.tweet(testText);
+      return res.status(200).json({
+        message: 'Pablo first tweet posted!',
+        mode: 'test',
+        tweet: testText,
+        tweet_id: testTweet.data.id,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Failed to post test tweet',
+        error: error.message,
+      });
+    }
   }
 
   // --- Generate and post tweet ---
