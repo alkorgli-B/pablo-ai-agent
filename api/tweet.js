@@ -1,6 +1,7 @@
 const { TwitterApi } = require('twitter-api-v2');
 const AnthropicModule = require('@anthropic-ai/sdk');
 
+
 // Handle both default and named exports
 const Anthropic = AnthropicModule.default || AnthropicModule;
 
