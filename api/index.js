@@ -20,7 +20,8 @@ module.exports = async function handler(req, res) {
     '<body>' +
     '<div class="container">' +
     '<h1>Pablo AI</h1>' +
-    '<p>An autonomous AI agent that tweets on X (Twitter) using Claude AI.</p>' +
+    '<p>An autonomous AI agent powered by Claude AI.</p>' +
+    '<p>Active on: Telegram</p>' +
     '<div class="status">Active</div>' +
     '<p style="margin-top: 2rem; font-size: 0.9rem;">' +
     '<a href="/api/test">API Status</a>' +

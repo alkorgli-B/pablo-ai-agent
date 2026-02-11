@@ -12,6 +12,10 @@
     {
       "src": "api/test.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/telegram.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -26,6 +30,10 @@
     {
       "src": "/api/test",
       "dest": "/api/test.js"
+    },
+    {
+      "src": "/api/telegram",
+      "dest": "/api/telegram.js"
     }
   ],
   "crons": [
