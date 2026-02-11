@@ -42,7 +42,7 @@ async function generateTweet() {
   const randomTopic = topics[Math.floor(Math.random() * topics.length)];
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-5-20250929',
     max_tokens: 150,
     system: PABLO_SYSTEM_PROMPT,
     messages: [
@@ -86,18 +86,28 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Authenticate via query param, header, or body
-  var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
-
-  if (!authKey) {
-    return res.status(401).json({
-      error: 'No key provided',
-      hint: 'Add ?key=YOUR_SECRET to the URL',
-    });
+  // Check if this is a Vercel Cron request
+  var isVercelCron = false;
+  var authHeader = req.headers['authorization'] || '';
+  var cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && authHeader === 'Bearer ' + cronSecret) {
+    isVercelCron = true;
   }
 
-  if (authKey !== process.env.BOT_SECRET_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (!isVercelCron) {
+    // Authenticate via query param, header, or body
+    var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
+
+    if (!authKey) {
+      return res.status(401).json({
+        error: 'No key provided',
+        hint: 'Add ?key=YOUR_SECRET to the URL',
+      });
+    }
+
+    if (authKey !== process.env.BOT_SECRET_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   try {
