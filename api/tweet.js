@@ -82,26 +82,22 @@ async function postTweet() {
 
 // Vercel serverless function handler
 module.exports = async function handler(req, res) {
-  // Vercel Cron sends GET with Authorization header
-  if (req.method === 'GET') {
-    var cronAuth = req.headers['authorization'];
-    if (cronAuth !== 'Bearer ' + process.env.CRON_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  } else if (req.method === 'POST') {
-    // Manual trigger with BOT_SECRET_KEY
-    var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
-    if (!authKey) {
-      return res.status(401).json({
-        error: 'No key provided',
-        hint: 'Add ?key=YOUR_SECRET to the URL',
-      });
-    }
-    if (authKey !== process.env.BOT_SECRET_KEY) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-  } else {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Authenticate via query param, header, or body
+  var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
+
+  if (!authKey) {
+    return res.status(401).json({
+      error: 'No key provided',
+      hint: 'Add ?key=YOUR_SECRET to the URL',
+    });
+  }
+
+  if (authKey !== process.env.BOT_SECRET_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {

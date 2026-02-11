@@ -19,11 +19,5 @@
       "src": "/api/test",
       "dest": "/api/test.js"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/tweet",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
