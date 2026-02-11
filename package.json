@@ -1,9 +1,9 @@
 {
-“name”: “pablo-ai-agent”,
-“version”: “1.0.0”,
-“description”: “Pablo is an intelligent, autonomous AI agent that operates independently on X”,
-“dependencies”: {
-“twitter-api-v2”: “^1.15.0”,
-“@anthropic-ai/sdk”: “^0.39.0”
-}
+  "name": "pablo-ai-agent",
+  "version": "1.0.0",
+  "description": "Pablo is an intelligent, autonomous AI agent that operates independently on X",
+  "dependencies": {
+    "twitter-api-v2": "^1.15.0",
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
 }
