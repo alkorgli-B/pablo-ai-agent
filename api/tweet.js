@@ -5,13 +5,14 @@ var AnthropicModule = require('@anthropic-ai/sdk');
 var Anthropic = AnthropicModule.default || AnthropicModule;
 
 // Required environment variables for tweeting
-var REQUIRED_ENV = [
+var TWITTER_ENV = [
   'TWITTER_API_KEY',
   'TWITTER_API_SECRET',
   'TWITTER_ACCESS_TOKEN',
   'TWITTER_ACCESS_SECRET',
-  'ANTHROPIC_API_KEY',
 ];
+
+var REQUIRED_ENV = TWITTER_ENV.concat(['ANTHROPIC_API_KEY']);
 
 function checkEnvVars() {
   var missing = [];
@@ -102,28 +103,31 @@ module.exports = async function handler(req, res) {
   // If neither secret is configured, all requests are allowed
   var isAuthorized = false;
   var authHeader = req.headers['authorization'] || '';
-  var cronSecret = process.env.CRON_SECRET;
-  var botSecret = process.env.BOT_SECRET_KEY;
-  var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
+  var cronSecret = (process.env.CRON_SECRET || '').trim();
+  var botSecret = (process.env.BOT_SECRET_KEY || '').trim();
+  var authKey = (req.query.key || req.headers['x-api-key'] || (req.body && req.body.key) || '').trim();
 
   // Check CRON_SECRET (for Vercel Cron)
   if (cronSecret && authHeader === 'Bearer ' + cronSecret) {
     isAuthorized = true;
   }
 
-  // Check BOT_SECRET_KEY (for manual access)
-  if (!isAuthorized && botSecret && authKey === botSecret) {
+  // Check BOT_SECRET_KEY (for manual access) - trim both to avoid whitespace issues
+  if (!isAuthorized && botSecret && authKey && authKey === botSecret) {
     isAuthorized = true;
   }
 
-  // If CRON_SECRET is not set, allow requests without a key param
-  // (this lets Vercel Cron work without configuring CRON_SECRET)
+  // If no secrets configured at all, allow everything (initial setup)
+  if (!isAuthorized && !cronSecret && !botSecret) {
+    isAuthorized = true;
+  }
+
+  // If CRON_SECRET is not set, allow requests without a key param (for Vercel Cron)
   if (!isAuthorized && !cronSecret && !authKey) {
     isAuthorized = true;
   }
 
-  // If BOT_SECRET_KEY is not set, allow any request that has a key param
-  // (this lets manual testing work before BOT_SECRET_KEY is configured)
+  // If BOT_SECRET_KEY is not set, allow any request with a key param (for testing)
   if (!isAuthorized && !botSecret && authKey) {
     isAuthorized = true;
   }
@@ -131,11 +135,16 @@ module.exports = async function handler(req, res) {
   if (!isAuthorized) {
     return res.status(401).json({
       error: 'Unauthorized',
-      hint: 'The key you provided does not match BOT_SECRET_KEY in Vercel env vars',
+      hint: 'The key you provided does not match BOT_SECRET_KEY in Vercel env vars. Check spelling and whitespace.',
       debug: {
         has_cron_secret_env: Boolean(cronSecret),
         has_bot_secret_env: Boolean(botSecret),
         key_provided: Boolean(authKey),
+        bot_secret_length: botSecret.length,
+        key_length: authKey.length,
+        bot_secret_preview: botSecret ? botSecret.slice(0, 4) + '***' : '(empty)',
+        key_preview: authKey ? authKey.slice(0, 4) + '***' : '(empty)',
+        match: authKey === botSecret,
       },
     });
   }
@@ -148,6 +157,41 @@ module.exports = async function handler(req, res) {
       missing: missing,
       hint: 'Add these in Vercel Dashboard > Settings > Environment Variables',
     });
+  }
+
+  // --- Test mode: post a hardcoded tweet without Claude API ---
+  if (req.query.test === '1') {
+    var twitterMissing = [];
+    for (var i = 0; i < TWITTER_ENV.length; i++) {
+      if (!process.env[TWITTER_ENV[i]]) twitterMissing.push(TWITTER_ENV[i]);
+    }
+    if (twitterMissing.length > 0) {
+      return res.status(500).json({
+        error: 'Missing Twitter env vars',
+        missing: twitterMissing,
+      });
+    }
+    try {
+      var testClient = new TwitterApi({
+        appKey: process.env.TWITTER_API_KEY,
+        appSecret: process.env.TWITTER_API_SECRET,
+        accessToken: process.env.TWITTER_ACCESS_TOKEN,
+        accessSecret: process.env.TWITTER_ACCESS_SECRET,
+      });
+      var testText = 'مرحبا، انا بابلو 🤖 بديت اليوم! صانعي @alkorgli فهّمني كل شي. Hello world, I am Pablo AI - I just started today!';
+      var testTweet = await testClient.v2.tweet(testText);
+      return res.status(200).json({
+        message: 'Pablo first tweet posted!',
+        mode: 'test',
+        tweet: testText,
+        tweet_id: testTweet.data.id,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Failed to post test tweet',
+        error: error.message,
+      });
+    }
   }
 
   // --- Generate and post tweet ---
