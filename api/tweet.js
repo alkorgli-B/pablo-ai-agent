@@ -134,13 +134,16 @@ module.exports = async function handler(req, res) {
   if (!isAuthorized) {
     return res.status(401).json({
       error: 'Unauthorized',
-      hint: 'The key you provided does not match BOT_SECRET_KEY in Vercel env vars',
+      hint: 'The key you provided does not match BOT_SECRET_KEY in Vercel env vars. Check spelling and whitespace.',
       debug: {
         has_cron_secret_env: Boolean(cronSecret),
         has_bot_secret_env: Boolean(botSecret),
         key_provided: Boolean(authKey),
         bot_secret_length: botSecret.length,
         key_length: authKey.length,
+        bot_secret_preview: botSecret ? botSecret.slice(0, 4) + '***' : '(empty)',
+        key_preview: authKey ? authKey.slice(0, 4) + '***' : '(empty)',
+        match: authKey === botSecret,
       },
     });
   }
