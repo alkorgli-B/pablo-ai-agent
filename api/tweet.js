@@ -1,25 +1,30 @@
-const { TwitterApi } = require('twitter-api-v2');
-const AnthropicModule = require('@anthropic-ai/sdk');
-
+var { TwitterApi } = require('twitter-api-v2');
+var AnthropicModule = require('@anthropic-ai/sdk');
 
 // Handle both default and named exports
-const Anthropic = AnthropicModule.default || AnthropicModule;
+var Anthropic = AnthropicModule.default || AnthropicModule;
 
-// Initialize Twitter client
-const twitterClient = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY,
-  appSecret: process.env.TWITTER_API_SECRET,
-  accessToken: process.env.TWITTER_ACCESS_TOKEN,
-  accessSecret: process.env.TWITTER_ACCESS_SECRET,
-});
+// Required environment variables for tweeting
+var REQUIRED_ENV = [
+  'TWITTER_API_KEY',
+  'TWITTER_API_SECRET',
+  'TWITTER_ACCESS_TOKEN',
+  'TWITTER_ACCESS_SECRET',
+  'ANTHROPIC_API_KEY',
+];
 
-// Initialize Claude client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+function checkEnvVars() {
+  var missing = [];
+  for (var i = 0; i < REQUIRED_ENV.length; i++) {
+    if (!process.env[REQUIRED_ENV[i]]) {
+      missing.push(REQUIRED_ENV[i]);
+    }
+  }
+  return missing;
+}
 
 // Pablo's personality prompt
-const PABLO_SYSTEM_PROMPT = 'You are Pablo, an intelligent and autonomous AI agent on X (Twitter). ' +
+var PABLO_SYSTEM_PROMPT = 'You are Pablo, an intelligent and autonomous AI agent on X (Twitter). ' +
   'You tweet in Arabic (Libyan dialect when possible) and English. ' +
   'Your personality: ' +
   'Smart, witty, and insightful. ' +
@@ -30,7 +35,11 @@ const PABLO_SYSTEM_PROMPT = 'You are Pablo, an intelligent and autonomous AI age
   'Generate ONE tweet only. No hashtags unless relevant. No quotes around the tweet.';
 
 async function generateTweet() {
-  const topics = [
+  var anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  var topics = [
     'technology and AI future',
     'daily life observation',
     'motivational thought',
@@ -40,9 +49,9 @@ async function generateTweet() {
     'Arabic wisdom or saying with modern twist',
   ];
 
-  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+  var randomTopic = topics[Math.floor(Math.random() * topics.length)];
 
-  const message = await anthropic.messages.create({
+  var message = await anthropic.messages.create({
     model: 'claude-sonnet-4-5-20250929',
     max_tokens: 150,
     system: PABLO_SYSTEM_PROMPT,
@@ -54,7 +63,7 @@ async function generateTweet() {
     ],
   });
 
-  const textBlock = message.content.find(function (block) {
+  var textBlock = message.content.find(function (block) {
     return block.type === 'text';
   });
   if (!textBlock) {
@@ -65,20 +74,20 @@ async function generateTweet() {
 }
 
 async function postTweet() {
-  try {
-    const tweetText = await generateTweet();
-    const tweet = await twitterClient.v2.tweet(tweetText);
-    return {
-      success: true,
-      tweet: tweetText,
-      id: tweet.data.id,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
+  var twitterClient = new TwitterApi({
+    appKey: process.env.TWITTER_API_KEY,
+    appSecret: process.env.TWITTER_API_SECRET,
+    accessToken: process.env.TWITTER_ACCESS_TOKEN,
+    accessSecret: process.env.TWITTER_ACCESS_SECRET,
+  });
+
+  var tweetText = await generateTweet();
+  var tweet = await twitterClient.v2.tweet(tweetText);
+  return {
+    success: true,
+    tweet: tweetText,
+    id: tweet.data.id,
+  };
 }
 
 // Vercel serverless function handler
@@ -87,48 +96,59 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Check if this is a Vercel Cron request
-  var isVercelCron = false;
+  // --- Authentication ---
+  var isAuthorized = false;
+
+  // Method 1: Vercel Cron with CRON_SECRET
   var authHeader = req.headers['authorization'] || '';
   var cronSecret = process.env.CRON_SECRET;
   if (cronSecret && authHeader === 'Bearer ' + cronSecret) {
-    isVercelCron = true;
+    isAuthorized = true;
   }
 
-  if (!isVercelCron) {
-    // Authenticate via query param, header, or body
+  // Method 2: Manual trigger with BOT_SECRET_KEY
+  if (!isAuthorized) {
     var authKey = req.query.key || req.headers['x-api-key'] || (req.body && req.body.key);
-
-    if (!authKey) {
-      return res.status(401).json({
-        error: 'No key provided',
-        hint: 'Add ?key=YOUR_SECRET to the URL',
-      });
-    }
-
-    if (authKey !== process.env.BOT_SECRET_KEY) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (authKey && authKey === process.env.BOT_SECRET_KEY) {
+      isAuthorized = true;
     }
   }
 
+  // Method 3: If no secrets are configured at all, allow access
+  // (so the bot works during initial setup before secrets are added)
+  if (!isAuthorized && !cronSecret && !process.env.BOT_SECRET_KEY) {
+    isAuthorized = true;
+  }
+
+  if (!isAuthorized) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      hint: 'Set CRON_SECRET env var for cron jobs, or use ?key=YOUR_BOT_SECRET_KEY for manual access',
+    });
+  }
+
+  // --- Check required environment variables ---
+  var missing = checkEnvVars();
+  if (missing.length > 0) {
+    return res.status(500).json({
+      error: 'Missing required environment variables',
+      missing: missing,
+      hint: 'Add these in Vercel Dashboard > Settings > Environment Variables',
+    });
+  }
+
+  // --- Generate and post tweet ---
   try {
     var result = await postTweet();
 
-    if (result.success) {
-      return res.status(200).json({
-        message: 'Pablo tweeted successfully!',
-        tweet: result.tweet,
-        tweet_id: result.id,
-      });
-    } else {
-      return res.status(500).json({
-        message: 'Failed to tweet',
-        error: result.error,
-      });
-    }
+    return res.status(200).json({
+      message: 'Pablo tweeted successfully!',
+      tweet: result.tweet,
+      tweet_id: result.id,
+    });
   } catch (error) {
     return res.status(500).json({
-      message: 'Server error',
+      message: 'Failed to tweet',
       error: error.message,
     });
   }
