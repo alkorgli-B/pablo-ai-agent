@@ -84,19 +84,33 @@ async function generateResponse(userMessage, userName) {
 // Vercel serverless function handler
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
+    var hasBotToken = !!process.env.TELEGRAM_BOT_TOKEN;
+    var hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
     return res.status(200).json({
       status: 'Pablo Telegram Bot is running!',
+      env: {
+        TELEGRAM_BOT_TOKEN: hasBotToken ? 'SET' : 'MISSING',
+        ANTHROPIC_API_KEY: hasAnthropicKey ? 'SET' : 'MISSING',
+      },
       hint: 'Set webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://pablo-ai-agent-wheat.vercel.app/api/telegram',
     });
   }
 
   var botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
-    return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN not set' });
+    console.error('TELEGRAM_BOT_TOKEN not set');
+    return res.status(200).json({ error: 'TELEGRAM_BOT_TOKEN not set' });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set' });
+    console.error('ANTHROPIC_API_KEY not set');
+    // Try to notify the user if we have the bot token
+    var body = req.body;
+    var msg = body && (body.message || body.edited_message);
+    if (msg && msg.chat) {
+      await sendMessage(botToken, msg.chat.id, 'خطأ: ANTHROPIC_API_KEY مو مضبوط في Vercel. الرجاء إضافته في Environment Variables.', msg.message_id);
+    }
+    return res.status(200).json({ error: 'ANTHROPIC_API_KEY not set' });
   }
 
   var body = req.body;
