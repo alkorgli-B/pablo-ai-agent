@@ -18,6 +18,8 @@ const summarize = require('../skills/summarize');
 const translate = require('../skills/translate');
 const facts     = require('../skills/facts');
 const { calculate, formatCalcResult } = require('../skills/calculator');
+const crypto    = require('../skills/crypto');
+const aimodels  = require('../skills/aimodels');
 
 // ── Skill executor ────────────────────────────────────────
 
@@ -115,6 +117,31 @@ async function executeSkill(intent, text) {
       }
       // Fall through to chat if we couldn't parse the expression
       return { context: null, systemOverride: null };
+    }
+
+    case 'crypto': {
+      const coinParam = extractParam(text, 'crypto');
+      if (coinParam === 'top') {
+        const coins = await crypto.getTopCoins(10);
+        return {
+          context:        crypto.formatTopCoins(coins),
+          systemOverride: PROMPTS.skillResponse,
+        };
+      }
+      const coin = await crypto.getCryptoPrice(coinParam);
+      return {
+        context:        crypto.formatForAI(coin),
+        systemOverride: PROMPTS.skillResponse,
+      };
+    }
+
+    case 'aimodels': {
+      const task = aimodels.prepareAIModelsTask(text);
+      return {
+        context:        null,
+        systemOverride: task.systemOverride,
+        promptOverride: task.prompt,
+      };
     }
 
     default:

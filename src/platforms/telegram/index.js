@@ -30,16 +30,18 @@ channel.setBot(bot);
 
 // ── Register commands ─────────────────────────────────────
 
-bot.command('start',   commands.handleStart);
-bot.command('help',    commands.handleHelp);
-bot.command('clear',   commands.handleClear);
-bot.command('weather', commands.handleWeather);
-bot.command('news',    commands.handleNews);
-bot.command('search',  commands.handleSearch);
-bot.command('github',  commands.handleGithub);
-bot.command('stats',   commands.handleStats);
-bot.command('fact',    commands.handleFact);
-bot.command('about',   commands.handleAbout);
+bot.command('start',     commands.handleStart);
+bot.command('help',      commands.handleHelp);
+bot.command('clear',     commands.handleClear);
+bot.command('weather',   commands.handleWeather);
+bot.command('news',      commands.handleNews);
+bot.command('search',    commands.handleSearch);
+bot.command('github',    commands.handleGithub);
+bot.command('stats',     commands.handleStats);
+bot.command('fact',      commands.handleFact);
+bot.command('about',     commands.handleAbout);
+bot.command('crypto',    commands.handleCrypto);
+bot.command('aimodels',  commands.handleAIModels);
 
 // ── Register message handlers ─────────────────────────────
 

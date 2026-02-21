@@ -16,6 +16,8 @@ const search   = require('../../skills/search');
 const github   = require('../../skills/github');
 const facts    = require('../../skills/facts');
 const { calculate, formatCalcResult } = require('../../skills/calculator');
+const crypto   = require('../../skills/crypto');
+const aimodels = require('../../skills/aimodels');
 
 // ── /start ────────────────────────────────────────────────
 async function handleStart(ctx) {
@@ -158,6 +160,36 @@ async function handleFact(ctx) {
   await ctx.reply(`💡 ${reply}`);
 }
 
+// ── /crypto ───────────────────────────────────────────────
+async function handleCrypto(ctx) {
+  const args = ctx.message.text.split(' ').slice(1).join(' ').trim();
+
+  await ctx.sendChatAction('typing');
+
+  // "top" or empty → show top 10
+  if (!args || /^top|أكبر|قائمة|أهم/i.test(args)) {
+    const coins = await crypto.getTopCoins(10);
+    return ctx.reply(crypto.formatTopCoins(coins), { parse_mode: 'Markdown' });
+  }
+
+  // Single coin
+  const coin = await crypto.getCryptoPrice(args);
+  await ctx.reply(crypto.formatCryptoData(coin), { parse_mode: 'Markdown' });
+}
+
+// ── /aimodels ─────────────────────────────────────────────
+async function handleAIModels(ctx) {
+  const query = ctx.message.text.split(' ').slice(1).join(' ').trim()
+    || 'قدمّ لي نظرة عامة على أحدث نماذج الذكاء الاصطناعي المتاحة في 2025-2026';
+
+  await ctx.sendChatAction('typing');
+
+  const task  = aimodels.prepareAIModelsTask(query);
+  const reply = await ai.ask(task.systemOverride, task.prompt, { maxTokens: 700 });
+
+  await ctx.reply(reply, { parse_mode: 'Markdown' }).catch(() => ctx.reply(reply));
+}
+
 // ── /about ────────────────────────────────────────────────
 async function handleAbout(ctx) {
   await ctx.reply(
@@ -185,4 +217,6 @@ module.exports = {
   handleStats,
   handleFact,
   handleAbout,
+  handleCrypto,
+  handleAIModels,
 };
