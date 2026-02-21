@@ -236,12 +236,8 @@ async function main() {
   console.log('Pablo Twitter bot starting... 🚀');
   console.log('Mode: Free tier — tweet-only (no mention reading)');
 
-  // ── Tweet immediately on startup ──
-  try {
-    await postTweet();
-  } catch (err) {
-    logError('Startup tweet', err);
-  }
+  // ── Tweet immediately on startup (fatal if fails — shows real error in logs) ──
+  await postTweet();
 
   // ── Tweet every 2 hours ──
   setInterval(async () => {
