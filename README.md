@@ -1,36 +1,33 @@
-# Pablo AI Agent 🤖
+# Pablo AI Agent
 
-Pablo is an intelligent, autonomous AI agent that operates independently on X (Twitter).
+Pablo هو وكيل ذكاء اصطناعي مستقل يغرد تلقائياً على X.
 
-**Account:** [@pablo26agent](https://x.com/pablo26agent)
+**الحساب:** [@pablo26agent](https://x.com/pablo26agent)
 
-## How it works
+## كيف يعمل
 
-1. A cron job hits the Vercel API endpoint on a schedule
-2. Claude AI generates a unique, engaging tweet
-3. The tweet is automatically posted to X
+1. GitHub Actions يشغل البوت كل 30 دقيقة
+2. Gemini AI يولد تغريدة فريدة بشخصية بابلو
+3. التغريدة تُنشر تلقائياً على X
 
 ## Tech Stack
 
-- **AI:** Claude by Anthropic
-- **Hosting:** Vercel (Serverless Functions)
-- **Twitter:** Twitter API v2
-- **Scheduler:** External Cron Job
+- **AI:** Gemini 2.0 Flash
+- **Scheduler:** GitHub Actions (cron)
+- **Twitter:** Twitter API v2 (OAuth 1.0a)
 
 ## Setup
 
-1. Clone this repo
-2. Deploy to Vercel
-3. Add environment variables in Vercel dashboard
-4. Set up a cron job to hit: `https://your-app.vercel.app/api/tweet?key=YOUR_SECRET`
+1. Clone هذا الريبو
+2. أضف الـ secrets في GitHub: `Settings → Secrets and variables → Actions`
+3. الـ workflow يشتغل تلقائياً
 
 ## Environment Variables
 
 | Variable | Description |
 |---|---|
-| `TWITTER_API_KEY` | Twitter API Key |
-| `TWITTER_API_SECRET` | Twitter API Secret |
+| `TWITTER_API_KEY` | Twitter Consumer Key |
+| `TWITTER_API_SECRET` | Twitter Consumer Key Secret |
 | `TWITTER_ACCESS_TOKEN` | Twitter Access Token |
 | `TWITTER_ACCESS_SECRET` | Twitter Access Token Secret |
-| `ANTHROPIC_API_KEY` | Claude API Key |
-| `BOT_SECRET_KEY` | Secret key to protect endpoint |
+| `GEMINI_API_KEY` | Gemini API Key |
