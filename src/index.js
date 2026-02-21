@@ -28,6 +28,17 @@ async function main() {
 
   logger.info('pablo', `AI Provider: ${provider.toUpperCase()} ✓`);
 
+  // Start OpenClaw API server (non-blocking — optional feature)
+  if (process.env.PABLO_API_ENABLED !== 'false') {
+    try {
+      require('./api/server');
+      const port = process.env.PABLO_API_PORT || '3747';
+      logger.info('pablo', `OpenClaw API: http://127.0.0.1:${port} ✓`);
+    } catch (err) {
+      logger.warn('pablo', `OpenClaw API failed to start: ${err.message}`);
+    }
+  }
+
   const tg = hasTelegram();
   const tw = hasTwitter();
 
@@ -58,6 +69,7 @@ async function main() {
     await Promise.all(launches);
     logger.info('pablo', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     logger.info('pablo', `  ✓ Pablo is LIVE on ${[tg && 'Telegram', tw && 'Twitter'].filter(Boolean).join(' + ')}`);
+    logger.info('pablo', `  ✓ OpenClaw API ready at http://127.0.0.1:${process.env.PABLO_API_PORT || 3747}`);
     logger.info('pablo', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   } catch (err) {
     logger.error('pablo', `Fatal startup error: ${err.message}`);
