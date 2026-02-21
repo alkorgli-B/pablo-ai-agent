@@ -21,12 +21,22 @@ if (missing.length) {
 // ──────────────────────────────────────────────
 //  Clients
 // ──────────────────────────────────────────────
-const twitter = new TwitterApi({
-  appKey:      process.env.TWITTER_API_KEY,
-  appSecret:   process.env.TWITTER_API_SECRET,
-  accessToken: process.env.TWITTER_ACCESS_TOKEN,
+const twitterClient = new TwitterApi({
+  appKey:       process.env.TWITTER_API_KEY,
+  appSecret:    process.env.TWITTER_API_SECRET,
+  accessToken:  process.env.TWITTER_ACCESS_TOKEN,
   accessSecret: process.env.TWITTER_ACCESS_SECRET,
 });
+
+// Explicitly use read-write client for posting
+const twitter = twitterClient.readWrite;
+
+// Log first 6 chars of each key to verify they're loaded (not exposing full keys)
+console.log('Credentials check:');
+console.log('  TWITTER_API_KEY      :', process.env.TWITTER_API_KEY?.slice(0, 6) + '...');
+console.log('  TWITTER_API_SECRET   :', process.env.TWITTER_API_SECRET?.slice(0, 6) + '...');
+console.log('  TWITTER_ACCESS_TOKEN :', process.env.TWITTER_ACCESS_TOKEN?.slice(0, 6) + '...');
+console.log('  TWITTER_ACCESS_SECRET:', process.env.TWITTER_ACCESS_SECRET?.slice(0, 6) + '...');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
