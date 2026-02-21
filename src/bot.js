@@ -103,15 +103,19 @@ async function postTweet() {
     process.exit(1);
   }
 
+  // Verify credentials before tweeting (v1.1)
+  const me = await twitterClient.v1.verifyCredentials();
+  console.log(`✓ تم التحقق من الهوية: @${me.screen_name} (ID: ${me.id_str})`);
+
   const { tweet, topic } = await generateTweet();
 
   console.log(`الموضوع: ${topic}`);
   console.log(`التغريدة (${tweet.length} حرف):\n${tweet}`);
 
-  const response = await twitterClient.v2.tweet(tweet);
+  const response = await twitterClient.v1.tweet(tweet);
 
-  console.log(`✓ تم النشر! ID: ${response.data.id}`);
-  console.log(`رابط: https://x.com/pablo26agent/status/${response.data.id}`);
+  console.log(`✓ تم النشر! ID: ${response.id_str}`);
+  console.log(`رابط: https://x.com/pablo26agent/status/${response.id_str}`);
 
   return response.data;
 }
@@ -122,5 +126,12 @@ async function postTweet() {
 postTweet().catch((err) => {
   console.error('خطأ:', err?.message || err);
   if (err?.data) console.error('تفاصيل Twitter:', JSON.stringify(err.data, null, 2));
+  if (err?.code === 401) {
+    console.error('══ الحل: تحقق من GitHub Secrets (API Keys خاطئة) ══');
+  } else if (err?.code === 403) {
+    console.error('══ الحل: تأكد أن App Permissions تشمل Read+Write ══');
+  } else if (err?.code === 187) {
+    console.error('══ تغريدة مكررة — غيّر النص وحاول مجدداً ══');
+  }
   process.exit(1);
 });

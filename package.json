@@ -5,12 +5,15 @@
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js",
-    "tweet": "node src/bot.js"
+    "tweet": "node src/bot.js",
+    "telegram": "node src/telegram.js",
+    "telegram:post": "node src/telegram-post.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "dotenv": "^16.4.7",
     "groq-sdk": "^0.37.0",
+    "telegraf": "^4.16.3",
     "twitter-api-v2": "^1.15.0"
   }
 }
