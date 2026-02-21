@@ -48,6 +48,23 @@ const INTENT_PATTERNS = {
     /\bحقيقة\b|\bحقائق\b|\bمعلومة\b|\bهل تعلم\b|\bشيء مثير\b|\bأخبرني عن\b/i,
     /\bfact\b|\bdid you know\b|\btell me something\b|\binteresting\b/i,
   ],
+  crypto: [
+    /\bبيتكوين\b|\bبتكوين\b|\bإيثيريوم\b|\bاثيريوم\b|\bعملة رقمية\b|\bعملات رقمية\b|\bكريبتو\b|\bبلوكتشين\b/i,
+    /\bسعر\s*(btc|eth|bnb|sol|xrp|ada|doge|matic|avax|ltc|link|dot|shib|pepe|ton|trx|usdt)\b/i,
+    /\b(btc|eth|bnb|sol|xrp|ada|doge|matic|avax|ltc|link|dot|shib|pepe|ton)\s*(\/usdt|usdt|usd|\?|سعر|price)\b/i,
+    /\bcrypto\b|\bcryptocurrenc\b|\bbitcoin\b|\bethereum\b|\bsolana\b|\bripple\b|\bdogecoin\b/i,
+    /\bسعر.*عملة\b|\bعملة.*سعر\b|\bأسعار.*عملات\b|\bتشفير\b/i,
+    /\bالسوق الرقمي\b|\bالسوق المشفر\b/i,
+  ],
+  aimodels: [
+    /\bنماذج\s*(ذكاء|ai)\b|\bنموذج\s*(ذكاء|ai)\b/i,
+    /\bكلود\b|\bجيميناي\b|\bjpt\b|\bgpt\b|\bgemini\b|\bclaude\b|\bllama\b|\bgrok\b|\bmistral\b|\bdeepseek\b/i,
+    /\bأفضل\s*(نموذج|نماذج|ai|ذكاء)\b|\b(نموذج|نماذج)\s*أفضل\b/i,
+    /\bفرق\s*بين\s*(claude|gpt|gemini|llama|grok|mistral|deepseek)\b/i,
+    /\b(anthropic|openai|google ai|meta ai|xai)\b/i,
+    /\bai models?\b|\bbest ai\b|\blatest ai\b|\bllm\b|\blargelanguage\b/i,
+    /\bمقارنة.*نماذج\b|\bنماذج.*مقارنة\b|\bأحدث.*نماذج\b|\bنماذج.*أحدث\b/i,
+  ],
 };
 
 /**
@@ -104,6 +121,23 @@ function extractParam(text, intent) {
       return m?.[0]?.trim() || t;
     }
 
+    case 'crypto': {
+      // Extract coin symbol/name from message
+      const coinMatch = t.match(
+        /\b(btc|eth|bnb|sol|xrp|ada|doge|matic|avax|ltc|link|dot|shib|pepe|ton|trx|usdt|usdc|arb|op|near|apt|sui|inj|sei|floki|bitcoin|ethereum|solana|ripple|dogecoin|cardano|binance|polkadot|chainlink|avalanche|litecoin|uniswap|cosmos|tron|tether|polygon)\b/i
+      );
+      if (coinMatch) return coinMatch[1].toLowerCase();
+      // Arabic coin names
+      if (/بيتكوين|بتكوين/.test(t)) return 'bitcoin';
+      if (/إيثيريوم|اثيريوم|ايثيريوم/.test(t)) return 'ethereum';
+      if (/سولانا/.test(t)) return 'solana';
+      if (/دوج|دوجكوين/.test(t)) return 'dogecoin';
+      if (/شيبا/.test(t)) return 'shiba-inu';
+      // Check for "top" / "أكبر" to get top list
+      if (/\bأكبر\b|\bأهم\b|\bقائمة\b|\btop\b|\blist\b|\branking\b/i.test(t)) return 'top';
+      return 'bitcoin'; // default
+    }
+
     default:
       return t;
   }
@@ -113,16 +147,18 @@ function extractParam(text, intent) {
  * Get skill metadata for the /help command.
  */
 const SKILL_LIST = [
-  { emoji: '🔍', name: 'بحث',      trigger: 'ابحث عن [موضوع]',           desc: 'بحث في الإنترنت' },
-  { emoji: '📰', name: 'أخبار',    trigger: 'أخبار [موضوع]',              desc: 'آخر أخبار التقنية والذكاء الاصطناعي' },
-  { emoji: '🌤️', name: 'طقس',     trigger: 'طقس [مدينة]',                desc: 'الطقس الحالي لأي مدينة' },
-  { emoji: '💻', name: 'كود',      trigger: 'اكتب كود [وصف]',            desc: 'كتابة وشرح وإصلاح الكود' },
-  { emoji: '🐙', name: 'GitHub',   trigger: 'github trending',            desc: 'أبرز المستودعات على GitHub' },
-  { emoji: '📝', name: 'تلخيص',   trigger: 'لخص [نص أو رابط]',          desc: 'تلخيص أي نص أو مقال' },
-  { emoji: '🌍', name: 'ترجمة',   trigger: 'ترجم [نص] إلى [لغة]',        desc: 'ترجمة بين اللغات' },
-  { emoji: '🧮', name: 'حساب',    trigger: 'احسب [عملية]',               desc: 'عمليات حسابية' },
-  { emoji: '💡', name: 'حقائق',   trigger: 'هل تعلم / أخبرني حقيقة',    desc: 'حقائق مثيرة عن التقنية' },
-  { emoji: '💬', name: 'محادثة',  trigger: 'أي رسالة عادية',             desc: 'دردشة وأسئلة ونقاشات' },
+  { emoji: '🔍', name: 'بحث',         trigger: 'ابحث عن [موضوع]',              desc: 'بحث في الإنترنت' },
+  { emoji: '📰', name: 'أخبار',       trigger: 'أخبار [موضوع]',               desc: 'آخر أخبار التقنية والذكاء الاصطناعي' },
+  { emoji: '🌤️', name: 'طقس',        trigger: 'طقس [مدينة]',                 desc: 'الطقس الحالي لأي مدينة' },
+  { emoji: '💰', name: 'كريبتو',      trigger: 'BTC سعر / سعر بيتكوين / top crypto', desc: 'أسعار حقيقية من CoinGecko' },
+  { emoji: '🤖', name: 'نماذج AI',    trigger: 'claude vs gpt / أفضل نموذج AI', desc: 'مقارنة نماذج الذكاء الاصطناعي' },
+  { emoji: '💻', name: 'كود',         trigger: 'اكتب كود [وصف]',              desc: 'كتابة وشرح وإصلاح الكود' },
+  { emoji: '🐙', name: 'GitHub',      trigger: 'github trending',              desc: 'أبرز المستودعات على GitHub' },
+  { emoji: '📝', name: 'تلخيص',      trigger: 'لخص [نص أو رابط]',            desc: 'تلخيص أي نص أو مقال' },
+  { emoji: '🌍', name: 'ترجمة',      trigger: 'ترجم [نص] إلى [لغة]',          desc: 'ترجمة بين اللغات' },
+  { emoji: '🧮', name: 'حساب',       trigger: 'احسب [عملية]',                desc: 'عمليات حسابية' },
+  { emoji: '💡', name: 'حقائق',      trigger: 'هل تعلم / أخبرني حقيقة',      desc: 'حقائق مثيرة عن التقنية' },
+  { emoji: '💬', name: 'محادثة',     trigger: 'أي رسالة عادية',              desc: 'دردشة وأسئلة ونقاشات' },
 ];
 
 module.exports = { detectIntent, extractParam, SKILL_LIST, INTENT_PATTERNS };
