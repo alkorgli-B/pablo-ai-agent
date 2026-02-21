@@ -103,6 +103,10 @@ async function postTweet() {
     process.exit(1);
   }
 
+  // Verify credentials before tweeting
+  const me = await twitterClient.v2.me();
+  console.log(`✓ تم التحقق من الهوية: @${me.data.username} (ID: ${me.data.id})`);
+
   const { tweet, topic } = await generateTweet();
 
   console.log(`الموضوع: ${topic}`);
@@ -122,5 +126,7 @@ async function postTweet() {
 postTweet().catch((err) => {
   console.error('خطأ:', err?.message || err);
   if (err?.data) console.error('تفاصيل Twitter:', JSON.stringify(err.data, null, 2));
+  if (err?.headers) console.error('Headers:', JSON.stringify(Object.fromEntries(err.headers), null, 2));
+  if (err?.code) console.error('HTTP Code:', err.code);
   process.exit(1);
 });
