@@ -4,8 +4,8 @@
   "description": "Pablo — autonomous AI agent on X (@pablo26agent), powered by Gemini AI",
   "main": "src/bot.js",
   "scripts": {
-    "start": "node src/telegram.js",
-    "tweet": "node src/bot.js",
+    "start": "node src/twitter.js",
+    "twitter": "node src/twitter.js",
     "telegram": "node src/telegram.js",
     "telegram:post": "node src/telegram-post.js"
   },
