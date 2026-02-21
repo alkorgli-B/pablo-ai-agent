@@ -1,16 +1,27 @@
 {
   "name": "pablo-ai-agent",
-  "version": "2.0.0",
-  "description": "Pablo — autonomous AI agent on X (@pablo26agent), powered by Gemini AI",
-  "main": "src/bot.js",
+  "version": "3.0.0",
+  "description": "Pablo — autonomous AI agent on Telegram + X (@pablo26agent) with multi-skill capabilities",
+  "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "twitter": "node src/twitter.js",
-    "telegram": "node src/telegram.js",
-    "telegram:post": "node src/telegram-post.js"
+    "telegram": "node -e \"require('./src/platforms/telegram/index').start()\"",
+    "twitter": "node -e \"require('./src/platforms/twitter/index').start()\"",
+    "dev": "node --watch src/index.js"
   },
+  "keywords": [
+    "ai",
+    "agent",
+    "pablo",
+    "telegram",
+    "twitter",
+    "arabic",
+    "bot"
+  ],
+  "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.5",
     "dotenv": "^16.4.7",
     "groq-sdk": "^0.37.0",
     "telegraf": "^4.16.3",
