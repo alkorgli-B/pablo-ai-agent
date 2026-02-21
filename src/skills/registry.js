@@ -49,21 +49,36 @@ const INTENT_PATTERNS = {
     /\bfact\b|\bdid you know\b|\btell me something\b|\binteresting\b/i,
   ],
   crypto: [
-    /\bبيتكوين\b|\bبتكوين\b|\bإيثيريوم\b|\bاثيريوم\b|\bعملة رقمية\b|\bعملات رقمية\b|\bكريبتو\b|\bبلوكتشين\b/i,
-    /\bسعر\s*(btc|eth|bnb|sol|xrp|ada|doge|matic|avax|ltc|link|dot|shib|pepe|ton|trx|usdt)\b/i,
-    /\b(btc|eth|bnb|sol|xrp|ada|doge|matic|avax|ltc|link|dot|shib|pepe|ton)\s*(\/usdt|usdt|usd|\?|سعر|price)\b/i,
+    // Arabic coin names (no \b — Arabic chars are non-word chars in JS regex)
+    /بيتكوين|بتكوين|بيت\s*كوين/i,
+    /إيثيريوم|اثيريوم|ايثيريوم|إيثر/i,
+    /سولانا|دوجكوين|دوج\s*كوين|ريبل|كارداني|بينانس/i,
+    /شيبا\s*اينو|شيبا/i,
+    // Arabic trigger words + coin context
+    /(?:سعر|شارت|chart|قيمة|كم\s+يساوي|كم\s+سعر|كم\s+ثمن)\s+(?:ال)?(?:بيتكوين|بتكوين|إيثيريوم|اثيريوم|سولانا|دوج|ريبل|عملة)/i,
+    /(?:سعر|شارت|قيمة|كم)\s+(?:btc|eth|bnb|sol|xrp|ada|doge|shib|pepe|ton|trx)/i,
+    // Generic Arabic crypto keywords
+    /عملة\s+رقمية|عملات\s+رقمية|كريبتو|بلوكتشين|تشفير|العملات\s+المشفرة/i,
+    /السوق\s+الرقمي|السوق\s+المشفر|أسعار\s+العملات/i,
+    // English coin symbols/names (with proper \b since they're ASCII)
+    /\bbtc\b|\beth\b|\bbnb\b|\bsol\b|\bxrp\b|\bada\b|\bdoge\b|\bmatic\b|\bavax\b|\bltc\b|\blink\b|\bdot\b|\bshib\b|\bpepe\b|\bton\b|\btrx\b|\busdt\b/i,
     /\bcrypto\b|\bcryptocurrenc\b|\bbitcoin\b|\bethereum\b|\bsolana\b|\bripple\b|\bdogecoin\b/i,
-    /\bسعر.*عملة\b|\bعملة.*سعر\b|\bأسعار.*عملات\b|\bتشفير\b/i,
-    /\bالسوق الرقمي\b|\bالسوق المشفر\b/i,
+    // Price queries in English
+    /\bprice\s+of\b|\bbtc\s*\/\s*usd|\beth\s*\/\s*usd|\bcoin\s+price\b/i,
   ],
   aimodels: [
-    /\bنماذج\s*(ذكاء|ai)\b|\bنموذج\s*(ذكاء|ai)\b/i,
-    /\bكلود\b|\bجيميناي\b|\bjpt\b|\bgpt\b|\bgemini\b|\bclaude\b|\bllama\b|\bgrok\b|\bmistral\b|\bdeepseek\b/i,
-    /\bأفضل\s*(نموذج|نماذج|ai|ذكاء)\b|\b(نموذج|نماذج)\s*أفضل\b/i,
-    /\bفرق\s*بين\s*(claude|gpt|gemini|llama|grok|mistral|deepseek)\b/i,
-    /\b(anthropic|openai|google ai|meta ai|xai)\b/i,
-    /\bai models?\b|\bbest ai\b|\blatest ai\b|\bllm\b|\blargelanguage\b/i,
-    /\bمقارنة.*نماذج\b|\bنماذج.*مقارنة\b|\bأحدث.*نماذج\b|\bنماذج.*أحدث\b/i,
+    // Arabic (no \b for Arabic words)
+    /نماذج\s*(?:ذكاء|ai)|نموذج\s*(?:ذكاء|ai)/i,
+    /كلود|جيميناي|جيمناي/i,
+    /أفضل\s*(?:نموذج|نماذج)|(?:نموذج|نماذج)\s*أفضل/i,
+    /فرق\s*بين\s*(?:claude|gpt|gemini|llama|grok|mistral|deepseek)/i,
+    /مقارنة.*نماذج|نماذج.*مقارنة|أحدث.*نماذج|نماذج.*أحدث/i,
+    /أحدث.*(?:ai|ذكاء)|(?:ai|ذكاء).*أحدث/i,
+    // English model names (ASCII — \b works fine)
+    /\bgpt\b|\bgemini\b|\bclaude\b|\bllama\b|\bgrok\b|\bmistral\b|\bdeepseek\b/i,
+    /\banthropicb|\bopenai\b|\bxai\b|\bmeta\s*ai\b/i,
+    /\bai\s*models?\b|\bbest\s*ai\b|\blatest\s*ai\b|\bllm\b/i,
+    /\bgpt-4\b|\bgpt-?4o\b|\bgpt-?o[13]\b|\bclaude-?3\b|\bgemini-?2\b/i,
   ],
 };
 
@@ -122,19 +137,26 @@ function extractParam(text, intent) {
     }
 
     case 'crypto': {
-      // Extract coin symbol/name from message
+      // Check for "top list" request first
+      if (/أكبر|أهم|قائمة|أفضل\s+عملات|top\s+coins?|top\s+crypto|all\s+coins?/i.test(t)) return 'top';
+
+      // Arabic coin names (with or without ال article)
+      if (/(?:ال)?بيتكوين|(?:ال)?بتكوين/.test(t))              return 'bitcoin';
+      if (/(?:ال)?إيثيريوم|(?:ال)?اثيريوم|(?:ال)?ايثيريوم/.test(t)) return 'ethereum';
+      if (/(?:ال)?سولانا/.test(t))                              return 'solana';
+      if (/(?:ال)?دوجكوين|(?:ال)?دوج\s*كوين/.test(t))          return 'dogecoin';
+      if (/دوج(?!كوين)/.test(t))                               return 'dogecoin';
+      if (/(?:ال)?شيبا/.test(t))                               return 'shiba-inu';
+      if (/(?:ال)?ريبل/.test(t))                               return 'ripple';
+      if (/(?:ال)?بينانس/.test(t))                             return 'binancecoin';
+      if (/(?:ال)?كارداني|(?:ال)?كاردانو/.test(t))             return 'cardano';
+
+      // English coin symbols (ASCII — \b works fine here)
       const coinMatch = t.match(
         /\b(btc|eth|bnb|sol|xrp|ada|doge|matic|avax|ltc|link|dot|shib|pepe|ton|trx|usdt|usdc|arb|op|near|apt|sui|inj|sei|floki|bitcoin|ethereum|solana|ripple|dogecoin|cardano|binance|polkadot|chainlink|avalanche|litecoin|uniswap|cosmos|tron|tether|polygon)\b/i
       );
       if (coinMatch) return coinMatch[1].toLowerCase();
-      // Arabic coin names
-      if (/بيتكوين|بتكوين/.test(t)) return 'bitcoin';
-      if (/إيثيريوم|اثيريوم|ايثيريوم/.test(t)) return 'ethereum';
-      if (/سولانا/.test(t)) return 'solana';
-      if (/دوج|دوجكوين/.test(t)) return 'dogecoin';
-      if (/شيبا/.test(t)) return 'shiba-inu';
-      // Check for "top" / "أكبر" to get top list
-      if (/\bأكبر\b|\bأهم\b|\bقائمة\b|\btop\b|\blist\b|\branking\b/i.test(t)) return 'top';
+
       return 'bitcoin'; // default
     }
 
