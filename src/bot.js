@@ -126,7 +126,15 @@ async function postTweet() {
 postTweet().catch((err) => {
   console.error('خطأ:', err?.message || err);
   if (err?.data) console.error('تفاصيل Twitter:', JSON.stringify(err.data, null, 2));
-  if (err?.headers) console.error('Headers:', JSON.stringify(Object.fromEntries(err.headers), null, 2));
-  if (err?.code) console.error('HTTP Code:', err.code);
+  if (err?.code === 401) {
+    console.error('');
+    console.error('══ الحل ═══════════════════════════════════');
+    console.error('الـ Twitter API Keys في GitHub Secrets خاطئة.');
+    console.error('افتح: developer.twitter.com → App → Keys and tokens');
+    console.error('انسخ القيم الجديدة وحدّث GitHub Secrets:');
+    console.error('  TWITTER_API_KEY, TWITTER_API_SECRET,');
+    console.error('  TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET');
+    console.error('═══════════════════════════════════════════');
+  }
   process.exit(1);
 });
