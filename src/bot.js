@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { TwitterApi } = require('twitter-api-v2');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
 // ──────────────────────────────────────────────
 //  Twitter client (OAuth 1.0a)
@@ -13,10 +13,9 @@ const twitterClient = new TwitterApi({
 });
 
 // ──────────────────────────────────────────────
-//  Gemini client
+//  Groq client (مجاني - Llama 3.3 70B)
 // ──────────────────────────────────────────────
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ──────────────────────────────────────────────
 //  Pablo personality & topics
@@ -56,21 +55,24 @@ const TOPICS = [
 ];
 
 // ──────────────────────────────────────────────
-//  Generate tweet using Gemini
+//  Generate tweet using Groq (Llama 3.3 70B)
 // ──────────────────────────────────────────────
 async function generateTweet() {
   const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
 
-  const prompt = `${SYSTEM_PROMPT}
+  const response = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: `الموضوع: ${topic}\n\nاكتب التغريدة الآن:` },
+    ],
+    max_tokens: 150,
+    temperature: 0.9,
+  });
 
-الموضوع: ${topic}
+  let tweet = response.choices[0].message.content.trim();
 
-اكتب التغريدة الآن:`;
-
-  const result = await model.generateContent(prompt);
-  let tweet = result.response.text().trim();
-
-  // Strip quotes if Gemini wrapped the output
+  // Strip quotes if model wrapped the output
   tweet = tweet.replace(/^["«»"']+|["«»"']+$/g, '').trim();
 
   // Enforce 280 char limit
@@ -93,7 +95,7 @@ async function postTweet() {
     'TWITTER_API_SECRET',
     'TWITTER_ACCESS_TOKEN',
     'TWITTER_ACCESS_SECRET',
-    'GEMINI_API_KEY',
+    'GROQ_API_KEY',
   ];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length) {
