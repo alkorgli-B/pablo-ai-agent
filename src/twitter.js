@@ -263,7 +263,13 @@ async function main() {
 
 main().catch((err) => {
   console.error('Fatal startup error:', err?.message || err);
-  if (err?.code === 401) console.error('Fix: Check Twitter API credentials in Railway env vars.');
-  if (err?.code === 403) console.error('Fix: Ensure the Twitter App has Read + Write permissions.');
+  if (err?.code === 401) {
+    console.error('Fix: Check Twitter API credentials in Railway env vars.');
+    console.error('401 detail:', JSON.stringify(err?.data ?? err?.errors ?? err, null, 2));
+  }
+  if (err?.code === 403) {
+    console.error('Fix: Ensure the Twitter App has Read + Write permissions.');
+    console.error('403 detail:', JSON.stringify(err?.data ?? err?.errors ?? err, null, 2));
+  }
   process.exit(1);
 });
