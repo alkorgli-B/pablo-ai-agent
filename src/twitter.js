@@ -234,22 +234,7 @@ function logError(label, err) {
 // ──────────────────────────────────────────────
 async function main() {
   console.log('Pablo Twitter bot starting... 🚀');
-
-  // Authenticate and get user ID
-  const me = await twitter.v2.me();
-  botUserId = me.data.id;
-  console.log(`✓ Authenticated as @${me.data.username} (ID: ${botUserId})`);
-
-  // Seed the mention cursor so we don't reply to old mentions on startup
-  try {
-    const seed = await twitter.v2.userMentionTimeline(botUserId, { max_results: 5 });
-    if (seed.data?.data?.length) {
-      lastMentionId = seed.data.data[0].id;
-      console.log(`✓ Mention cursor seeded: ${lastMentionId}`);
-    }
-  } catch (err) {
-    console.warn('Could not seed mention cursor (read access may be limited):', err?.message);
-  }
+  console.log('Mode: Free tier — tweet-only (no mention reading)');
 
   // ── Tweet immediately on startup ──
   try {
@@ -267,21 +252,12 @@ async function main() {
     }
   }, 2 * 60 * 60 * 1_000);
 
-  // ── Check mentions every 5 minutes ──
-  setInterval(async () => {
-    try {
-      await checkMentions();
-    } catch (err) {
-      logError('Mention check', err);
-    }
-  }, 5 * 60 * 1_000);
-
-  console.log('✓ Pablo is live — tweeting every 2h, checking mentions every 5min.\n');
+  console.log('✓ Pablo is live — tweeting every 2h.\n');
 }
 
 main().catch((err) => {
   console.error('Fatal startup error:', err?.message || err);
-  if (err?.code === 401) console.error('Fix: Check Twitter API credentials in env vars.');
+  if (err?.code === 401) console.error('Fix: Check Twitter API credentials in Railway env vars.');
   if (err?.code === 403) console.error('Fix: Ensure the Twitter App has Read + Write permissions.');
   process.exit(1);
 });
