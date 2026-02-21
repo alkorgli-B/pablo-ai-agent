@@ -3,16 +3,30 @@ const { TwitterApi } = require('twitter-api-v2');
 const Groq = require('groq-sdk');
 
 // ──────────────────────────────────────────────
+//  Sanitize env vars (strip leading/trailing whitespace and stray = signs)
+// ──────────────────────────────────────────────
+function sanitize(value) {
+  if (!value) return value;
+  return value.replace(/^[\s=]+/, '').replace(/[\s]+$/, '');
+}
+
+const TWITTER_API_KEY      = sanitize(process.env.TWITTER_API_KEY);
+const TWITTER_API_SECRET   = sanitize(process.env.TWITTER_API_SECRET);
+const TWITTER_ACCESS_TOKEN = sanitize(process.env.TWITTER_ACCESS_TOKEN);
+const TWITTER_ACCESS_SECRET= sanitize(process.env.TWITTER_ACCESS_SECRET);
+const GROQ_API_KEY         = sanitize(process.env.GROQ_API_KEY);
+
+// ──────────────────────────────────────────────
 //  Validate env vars
 // ──────────────────────────────────────────────
-const REQUIRED = [
-  'TWITTER_API_KEY',
-  'TWITTER_API_SECRET',
-  'TWITTER_ACCESS_TOKEN',
-  'TWITTER_ACCESS_SECRET',
-  'GROQ_API_KEY',
-];
-const missing = REQUIRED.filter((k) => !process.env[k]);
+const REQUIRED = {
+  TWITTER_API_KEY,
+  TWITTER_API_SECRET,
+  TWITTER_ACCESS_TOKEN,
+  TWITTER_ACCESS_SECRET,
+  GROQ_API_KEY,
+};
+const missing = Object.entries(REQUIRED).filter(([, v]) => !v).map(([k]) => k);
 if (missing.length) {
   console.error('Missing env vars:', missing.join(', '));
   process.exit(1);
@@ -22,23 +36,28 @@ if (missing.length) {
 //  Clients
 // ──────────────────────────────────────────────
 const twitterClient = new TwitterApi({
-  appKey:       process.env.TWITTER_API_KEY,
-  appSecret:    process.env.TWITTER_API_SECRET,
-  accessToken:  process.env.TWITTER_ACCESS_TOKEN,
-  accessSecret: process.env.TWITTER_ACCESS_SECRET,
+  appKey:       TWITTER_API_KEY,
+  appSecret:    TWITTER_API_SECRET,
+  accessToken:  TWITTER_ACCESS_TOKEN,
+  accessSecret: TWITTER_ACCESS_SECRET,
 });
 
 // Explicitly use read-write client for posting
 const twitter = twitterClient.readWrite;
 
-// Log first 6 chars of each key to verify they're loaded (not exposing full keys)
+// Log first 6 chars + raw char codes to verify values are clean
 console.log('Credentials check:');
-console.log('  TWITTER_API_KEY      :', process.env.TWITTER_API_KEY?.slice(0, 6) + '...');
-console.log('  TWITTER_API_SECRET   :', process.env.TWITTER_API_SECRET?.slice(0, 6) + '...');
-console.log('  TWITTER_ACCESS_TOKEN :', process.env.TWITTER_ACCESS_TOKEN?.slice(0, 6) + '...');
-console.log('  TWITTER_ACCESS_SECRET:', process.env.TWITTER_ACCESS_SECRET?.slice(0, 6) + '...');
+const showKey = (label, val) => {
+  const preview = val?.slice(0, 6) ?? 'MISSING';
+  const codes   = [...(preview)].map(c => c.charCodeAt(0)).join(',');
+  console.log(`  ${label}: ${preview}...  [charCodes: ${codes}]`);
+};
+showKey('TWITTER_API_KEY      ', TWITTER_API_KEY);
+showKey('TWITTER_API_SECRET   ', TWITTER_API_SECRET);
+showKey('TWITTER_ACCESS_TOKEN ', TWITTER_ACCESS_TOKEN);
+showKey('TWITTER_ACCESS_SECRET', TWITTER_ACCESS_SECRET);
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: GROQ_API_KEY });
 
 // ──────────────────────────────────────────────
 //  Pablo personality (English)
